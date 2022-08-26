@@ -1,4 +1,5 @@
 """
+ 'Altitude',
 Utilities that are used for processing scripts.
 """
 import collections
@@ -127,7 +128,7 @@ def get_profiles(ds, min_dp = 10.0, inversion=3., filt_length=7,
     return ds
 
 
-def get_profiles_new(ds, min_dp = 10.0, filt_time=100, profile_min_time=300):
+def get_profiles_new(ds, min_dp = 10.0, filt_time=100, profile_min_time=30):
     """
     Find profiles in a glider timeseries:
 
@@ -153,9 +154,10 @@ def get_profiles_new(ds, min_dp = 10.0, filt_time=100, profile_min_time=300):
     #dt = float(np.median(np.diff(ds.time.values[good[:200000]])))
     dt = float(np.median(np.diff(ds.time.values[good[:200000]]).astype(np.float64)) * 1e-9)
     _log.info(f'dt, {dt}')
-    filt_length = int(filt_time /  dt)
-
+    filt_length = int(filt_time / dt)
+    print(profile_min_time)
     min_nsamples = int(profile_min_time / dt)
+    print(min_nsamples)
     _log.info('Filt Len  %d, dt %f, min_n %d', filt_length, dt, min_nsamples)
 
     p = np.convolve(ds.pressure.values[good],
@@ -220,6 +222,7 @@ def get_profiles_new(ds, min_dp = 10.0, filt_time=100, profile_min_time=300):
              ('min_dp', min_dp),
              ('filt_length', filt_length),
              ('min_nsamples', min_nsamples)])
+    print(max(profile))
     ds['profile_index'] = (('time'), profile, attrs)
 
     attrs = collections.OrderedDict([('long_name', 'glider vertical speed direction'),
