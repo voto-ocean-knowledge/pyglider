@@ -396,13 +396,8 @@ def raw_to_timeseries(indir, outdir, deploymentyaml, kind='raw',
 
     # keep only timestamps with data from one of a set of variables
     if 'keep_variables' in ncvar:
-        keeps = np.empty(len(ds.longitude))
-        keeps[:] = np.nan
         keeper_vars = ncvar['keep_variables']
-        for keep_var in keeper_vars:
-            keeps[~np.isnan(ds[keep_var].values)] = 1
-        ds = ds.where(~np.isnan(keeps))
-        ds = ds.dropna(dim='time', how='all')
+        ds = ds.dropna(dim='time', how='all', subset=keeper_vars)
 
     # some derived variables:
     ds = utils.get_glider_depth(ds)
