@@ -15,6 +15,6 @@ dependencies:
   - pytest-cov
   - pooch
   - matplotlib
-  - polars>0.17
+  - polars>0.16
   - pip:
     - dbdreader<0.4.15
