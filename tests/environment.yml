@@ -9,12 +9,12 @@ dependencies:
   - dask
   - netcdf4
   - gsw
-  - scipy
-  - bitstring
   - pytest
   - pytest-cov
+  - scipy
+  - bitstring
   - pooch
-  - matplotlib
   - polars>0.16
   - pip:
-    - dbdreader<0.4.15
+    - dbdreader
+    
