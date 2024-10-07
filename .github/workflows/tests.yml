@@ -6,17 +6,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-latest"]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        os: ["ubuntu-latest", "mac-latest", "windows-latest"]
+        python-version: ["3.9", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - name: mamba setup enviroment
         uses: mamba-org/setup-micromamba@v1.9.0
         with:
           environment-name: test-env
-          environment-file: tests/environment.yml
           create-args: >-
-            python=${{ matrix.python-version }}
+            python=${{ matrix.python-version }} --file tests-requirements.txt --channel conda-forge
       - name: Conda info
         shell: micromamba-shell {0}
         run: conda info; conda list
