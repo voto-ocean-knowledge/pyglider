@@ -47,7 +47,7 @@ def extract_timeseries_profiles(inname, outdir, deploymentyaml):
         for p in profiles:
             ind = np.where(ds.profile_index == p)[0]
             dss = ds.isel(time=ind)
-            outname = outdir + '/' + utils.get_file_id(dss) + '.nc'
+            outname = outdir + '/' + 'mission_grid.nc'
             _log.info('Checking %s', outname)
             if not os.path.exists(outname):
                 # this is the id for the whole file, not just this profile..
