@@ -11,10 +11,12 @@ dependencies:
   - gsw
   - scipy
   - bitstring
+  - polars>=1.1
   - pytest
   - pytest-cov
   - pooch
   - matplotlib
+  - compliance-checker
+  - cc-plugin-glider
   - pip:
     - dbdreader
-    - polars

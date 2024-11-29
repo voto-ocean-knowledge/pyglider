@@ -41,7 +41,7 @@ def _sort(ds):
 def raw_to_rawnc(indir, outdir, deploymentyaml, incremental=True,
                  min_samples_in_file=5, dropna_subset=None, dropna_thresh=1):
     """
-    Convert seaexplorer text files to raw parquet files.
+    Convert seaexplorer text files to raw parquet pandas files.
 
     Parameters
     ----------
@@ -268,8 +268,8 @@ def merge_parquet(indir, outdir, deploymentyaml, incremental=False, kind='raw'):
         Only add new files....
     """
 
-    with open(deploymentyaml) as fin:
-        deployment = yaml.safe_load(fin)
+    deployment = utils._get_deployment(deploymentyaml)
+
     metadata = deployment['metadata']
     id = metadata['glider_name']
     outgli = outdir + '/' + id + '-rawgli.parquet'
@@ -339,13 +339,14 @@ def _remove_fill_values(df, fill_value=-9999):
 
 
 def raw_to_timeseries(indir, outdir, deploymentyaml, kind='raw',
-                      profile_filt_time=100, profile_min_time=300, maxgap=300, interpolate=False, fnamesuffix=''):
+                      profile_filt_time=100, profile_min_time=300,
+                      maxgap=10, interpolate=False, fnamesuffix=''):
     """
     A little different than above, for the 4-file version of the data set.
     """
 
-    with open(deploymentyaml) as fin:
-        deployment = yaml.safe_load(fin)
+    deployment = utils._get_deployment(deploymentyaml)
+
     metadata = deployment['metadata']
     ncvar = deployment['netcdf_variables']
     device_data = deployment['glider_devices']
@@ -425,7 +426,9 @@ def raw_to_timeseries(indir, outdir, deploymentyaml, kind='raw',
                         val = np.interp(time_timebase.astype(float), time_var.astype(float), var_non_nan)
 
                     # interpolate only over those gaps that are smaller than 'maxgap'
-                    tg_ind = utils.find_gaps(time_var.astype(float), time_timebase.astype(float), maxgap)
+                    # apparently maxgap is to be in somethng like seconds, and this data is in ms.  Certainly
+                    # the default of 0.3 s was not intended.  Changing default to 10 s:
+                    tg_ind = utils.find_gaps(time_var.astype(float), time_timebase.astype(float), maxgap*1000)
                     val[tg_ind] = np.nan
                 else:
                     val = val[indctd]
@@ -524,7 +527,8 @@ def raw_to_timeseries(indir, outdir, deploymentyaml, kind='raw',
         if 'units' in ds.ad2cp_time.attrs.keys():
             ds.ad2cp_time.attrs.pop('units')
     ds.to_netcdf(outname, 'w',
-                 encoding={'time': {'units': 'milliseconds since 1970-01-01T00:00:00Z'}})
+                 encoding={'time': {'units': 'seconds since 1970-01-01T00:00:00Z',
+                                    'dtype': 'float64'}})
     return outname
 
 
