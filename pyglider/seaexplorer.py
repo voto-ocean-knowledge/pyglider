@@ -148,7 +148,19 @@ def raw_to_rawnc(indir, outdir, deploymentyaml, incremental=True,
                         out = out.rename({"PLD_REALTIMECLOCK": "time"})
                     for col_name in out.columns:
                         if "time" not in col_name.lower():
+                            # strip leading and trailing spaces
+                            if str(out.schema[col_name]) == "String":
+                                out = out.with_columns(pl.col(col_name).str.strip_chars())
+                                # replace empty values with None
+                                out = out.with_columns(pl.when(pl.col(col_name).str.len_chars() == 0)
+                                                       .then(None)
+                                                       .otherwise(pl.col(col_name))
+                                                       .name.keep())
+                                out = out.with_columns(pl.col(col_name).replace(["Error-19"], [None]))
                             out = out.with_columns(pl.col(col_name).cast(pl.Float64))
+                    # remove leading and trailing spaces from column names
+                    out = out.rename(str.strip)
+
                     # If AD2CP data present, convert timestamps to datetime
                     if 'AD2CP_TIME' in out.columns:
                         # Set datestamps with date 00000 to None
