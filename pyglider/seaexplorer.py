@@ -7,6 +7,7 @@ import logging
 import numpy as np
 import os
 import xarray as xr
+import scipy
 import yaml
 import pyglider.utils as utils
 import datetime
@@ -326,6 +327,18 @@ def _interp_gli_to_pld(gli, ds, val, indctd):
     return valout
 
 
+_vars_no_interpolate = ['nav_state', 'dive_num', 'security_level', 'altimeter', 'dead_reckoning', 'nav_resource']
+
+
+def _nearest_neighbour_gli_to_pld(gli, ds, val):
+    time_out = ds['time'].astype(int).values
+    gli_ind = ~np.isnan(val)
+    time_in = np.array(gli.filter(gli_ind)["time"].to_numpy().astype('datetime64[ns]')).astype(int)
+    f = scipy.interpolate.interp1d(time_in[gli_ind], val, kind='nearest', fill_value=np.nan, bounds_error=False)
+    val = f(time_out)
+    return val
+
+
 def _interp_pld_to_pld(pld, ds, val, indctd):
     pld_ind = np.where(~np.isnan(val))[0]
     if len(pld_ind) != len(indctd):
@@ -452,7 +465,11 @@ def raw_to_timeseries(indir, outdir, deploymentyaml, kind='raw',
                 val = convert(val)
                 # Values from the glider netcdf must be interpolated to match
                 # the sensor netcdf
-                val = _interp_gli_to_pld(gli, ds, val, indctd)
+                # For some variables which have a finite set of values, e..g nav_resource, use nearest neighbout
+                if name in _vars_no_interpolate:
+                    val = _nearest_neighbour_gli_to_pld(gli, ds, val)
+                else:
+                    val = _interp_gli_to_pld(gli, ds, val, indctd)
 
             # make the attributes:
             ncvar[name].pop('coordinates', None)
