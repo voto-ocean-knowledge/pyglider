@@ -181,7 +181,6 @@ def raw_to_rawnc(indir, outdir, deploymentyaml, incremental=True,
                             pl.col("null_count") <= dropna_thresh) \
                             .drop("null_count")
                     if ftype == 'gli':
-                        out = out.with_columns([(pl.col("NavState") * 0 + int(filenum)).alias("fnum")])
                         out_special = out.select(
                             pl.col('time'),
                             pl.col("^(NavState)$").cast(pl.UInt8),
@@ -197,6 +196,7 @@ def raw_to_rawnc(indir, outdir, deploymentyaml, incremental=True,
                         out.write_parquet(fnout)
                         goodfiles.append(f)
                     else:
+                        out = out.with_columns([(pl.col("NAV_RESOURCE") * 0 + int(filenum)).alias("fnum")])
                         if out.select("time").shape[0] > min_samples_in_file:
                             # Drop rows that have no data from the key variables
                             if 'keep_variables' in ncvar.keys():
@@ -287,12 +287,13 @@ def merge_parquet(indir, outdir, deploymentyaml, incremental=False, kind='raw'):
     outgli = outdir + '/' + id + '-rawgli.parquet'
     outpld = outdir + '/' + id + '-' + kind + 'pld.parquet'
 
-    _log.info('Opening *.gli.sub.*.parquet multi-file dataset from %s', indir)
-    files = sorted(glob.glob(indir + '/*.gli.sub.*.parquet'))
+    _log.info('Opening *.gli.*.parquet multi-file dataset from %s', indir)
+    files = sorted(glob.glob(indir + '/*.gli.*.parquet'))
     if not files:
         _log.warning(f'No *gli*.parquet files found in {indir}')
         return False
-    gli = pl.read_parquet(indir + '/*.gli.sub.*.parquet')
+    first = pl.read_parquet(files[0])
+    gli = pl.read_parquet(indir + '/*.gli.*.parquet', columns=first.columns, allow_missing_columns=True)
     gli.write_parquet(outgli)
     _log.info(f'Done writing {outgli}')
     _log.info('Opening *.pld.sub.*.parquet multi-file dataset')
